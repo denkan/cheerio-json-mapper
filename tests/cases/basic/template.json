@@ -1,0 +1,8 @@
+{
+  "title": "head > title",
+  "description": "head > meta[name=description] | attr:content",
+  "article": {
+    "headline": "article > h1",
+    "content": "article > div.content"
+  }
+}

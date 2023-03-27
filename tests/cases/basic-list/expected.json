@@ -1,0 +1,21 @@
+{
+  "title": "My title",
+  "description": "My description",
+  "customText": "My hardcoded text",
+  "customNumber": 123,
+  "customBoolean": true,
+  "articles": [
+    {
+      "headline": "Article 1",
+      "content": "My first text."
+    },
+    {
+      "headline": "Article 2",
+      "content": "My second text."
+    },
+    {
+      "headline": "Article 3",
+      "content": "My third text."
+    }
+  ]
+}

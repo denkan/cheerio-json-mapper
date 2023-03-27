@@ -1,0 +1,230 @@
+import * as cheerio from 'cheerio';
+
+type SingleOrArray<T> = T | T[];
+export type JsonTemplateObject = { [prop: string]: JsonTemplateValue };
+export type JsonTemplateValue = string | JsonTemplate;
+export type JsonTemplate = SingleOrArray<JsonTemplateObject>;
+
+export interface ResultWithPosition {
+  result: unknown;
+  position: Record<string, number>;
+}
+
+export interface PipeInput<T = unknown[]> {
+  value?: unknown;
+  selector?: string;
+  $scope: cheerio.Cheerio<cheerio.AnyNode>;
+  opts: Options;
+  args?: T; // custom extra args sent to pipe
+}
+export type PipeFn = (input: PipeInput) => unknown;
+export type PipeFnMap = Record<string, PipeFn>;
+
+export interface Pipe<T = unknown[]> {
+  name: string;
+  args?: T;
+}
+
+export interface Options {
+  selectProp: string;
+  pipeProp: string;
+  hiddenPropSuffix: string;
+  pipeFns: PipeFnMap;
+}
+
+const defaultPipeFns: PipeFnMap = {
+  text: ({ $scope, selector }) => $scope.find(selector).text().trim(),
+  trim: ({ value }) => value?.toString().trim(),
+  lowercase: ({ value }) => value?.toString().toLowerCase(),
+  uppercase: ({ value }) => value?.toString().toUpperCase(),
+  attr: ({ $scope, selector, args }) => {
+    const attrName = args?.[0]?.toString() || '';
+    return $scope.find(selector).attr(attrName)?.trim();
+  },
+  /** Remove internal props */
+  cleanup: ({ value, opts }) => {
+    if (typeof value === 'object' && value) {
+      const obj = value as Record<string, unknown>;
+      for (const key in obj) {
+        const isInternalProp = [opts.selectProp, opts.pipeProp].includes(key);
+        if (isInternalProp) {
+          delete obj[key];
+        }
+      }
+    }
+    return value;
+  },
+};
+
+const defaultOptions: Options = {
+  selectProp: '$',
+  pipeProp: '|',
+  hiddenPropSuffix: '____cjm____',
+  pipeFns: { ...defaultPipeFns },
+};
+
+export function cheerioJsonMapper(
+  htmlOrNode: string | cheerio.AnyNode | cheerio.Cheerio<cheerio.AnyNode>,
+  jsonTemplate: string | JsonTemplate,
+  options?: Partial<Options>,
+) {
+  if (typeof jsonTemplate === 'string') {
+    jsonTemplate = JSON.parse(jsonTemplate);
+  }
+
+  const isCheerioNode =
+    typeof htmlOrNode === 'object' && (htmlOrNode as cheerio.Cheerio<cheerio.AnyNode>).cheerio === '[cheerio object]';
+  const $scope: cheerio.Cheerio<cheerio.AnyNode> = isCheerioNode
+    ? (htmlOrNode as cheerio.Cheerio<cheerio.AnyNode>)
+    : cheerio.load(htmlOrNode as never, { sourceCodeLocationInfo: true })(':root');
+
+  const opts = { ...defaultOptions, ...options };
+  opts.pipeFns = { ...defaultOptions.pipeFns, ...options?.pipeFns };
+
+  if (Array.isArray(jsonTemplate)) {
+    return mapArray($scope, jsonTemplate, opts);
+  }
+  if (typeof jsonTemplate === 'object' && jsonTemplate && !Array.isArray(jsonTemplate)) {
+    return mapObject($scope, jsonTemplate, opts)[0].result; // return first matched
+  }
+}
+
+/**
+ * Map object template data
+ **/
+function mapObject($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonTemplateObject, opts: Options) {
+  const scopeSelector = jsonTemplate[opts.selectProp] as string;
+  const $subScope = scopeSelector ? $scope.find(scopeSelector) : $scope; // use $ selector if specified
+
+  // a selector query can match multiple elements, so we need to loop over them
+  const results: ResultWithPosition[] = [];
+
+  $subScope.each((i) => {
+    const $el = $subScope.eq(i);
+    const result: Record<string, unknown> = {};
+    const position: Record<string, number> = {};
+
+    for (const key in jsonTemplate) {
+      const templateValue = jsonTemplate[key];
+      if (typeof templateValue === 'object' && templateValue) {
+        result[key] = cheerioJsonMapper($el, templateValue, opts); // recurse
+      } else {
+        const { value, startIndex } = getValue(templateValue, $el, opts);
+        result[key] = value; // set rendered value
+
+        const isSelectorProp = key === opts.selectProp;
+        position[key] = (isSelectorProp ? $el[0]?.startIndex : startIndex) ?? 0;
+      }
+    }
+
+    // apply pipes for object
+    const pipesAsString = (jsonTemplate[opts.pipeProp] || '').toString().split('|');
+    const pipes = parsePipes(pipesAsString);
+    pipes.push({ name: 'cleanup' });
+    const pipedResults = applyPipes(pipes, { value: result, $scope: $el, opts });
+
+    results.push({
+      result: pipedResults,
+      position,
+    });
+  });
+
+  return results;
+}
+
+/**
+ * Map array template data
+ */
+function mapArray($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonTemplateObject[], opts: Options) {
+  // loop over array and sort by matched startIndex
+  const resultWithPositions: ResultWithPosition[] = [];
+  for (const templateValue of jsonTemplate) {
+    if (typeof templateValue === 'object' && templateValue) {
+      // collect all matched items
+      mapObject($scope, templateValue, opts).forEach((r) => resultWithPositions.push(r));
+    } else {
+      // string / literal / array?
+      // const item = cheerioJsonMapper($scope, templateValue, opts);
+      // resultWithPositions.push(item);
+    }
+  }
+  const sortedResultWithPositions = resultWithPositions.sort((a, b) => {
+    // sort by startIndex
+    const startIndex = (x: ResultWithPosition) => x.position[opts.selectProp] ?? 0;
+    return startIndex(a) - startIndex(b);
+  });
+  return sortedResultWithPositions.map((x) => x.result);
+}
+
+/**
+ * Get value by either literal or selector through pipes
+ */
+function getValue(
+  templateValue: string | number | boolean,
+  $scope: cheerio.Cheerio<cheerio.AnyNode>,
+  opts: Options,
+): { value: unknown; startIndex?: number } {
+  const isHardValue = /^".*"$/.test(templateValue.toString()); // e.g. "my hard value"
+  if (isHardValue) {
+    return { value: templateValue.toString().slice(1, -1) }; // remove quotes
+  }
+  if (typeof templateValue !== 'string') {
+    return { value: templateValue }; // hardcoded number/boolean/null?
+  }
+  // use selector and run pipes
+  const [selector, ...pipesAsString] = templateValue.split('|');
+  const pipes = parsePipes(pipesAsString);
+  if (pipes.length === 0) {
+    pipes.push({ name: 'text' }); // use `text` as default pipe if nothing else specified
+  }
+  const result = applyPipes(pipes, { selector, opts, $scope });
+  const startIndex = $scope.find(selector)[0]?.startIndex ?? undefined;
+  return { value: result, startIndex };
+}
+
+/**
+ * Run pipes on selector
+ */
+function applyPipes(pipes: Pipe[], initialInput: PipeInput) {
+  const input: PipeInput = { ...initialInput };
+  for (const pipe of pipes) {
+    const pipeFn = input.opts.pipeFns[pipe.name];
+    if (!pipeFn) {
+      throw new Error(`Pipe function not found: ${pipe.name}`);
+    }
+    input.args = pipe.args;
+    input.value = pipeFn(input);
+  }
+  return input.value;
+}
+
+/**
+ * Parse handler as string or object into ensured array of Pipe objects
+ * @type {import('./scaper-mappers/types').ParseHandlerFn}
+ */
+export function parsePipes(pipeOrPipesAsStringOrObj: SingleOrArray<string | Pipe>): Pipe[] {
+  // ensure array
+  const pp = Array.isArray(pipeOrPipesAsStringOrObj) ? [...pipeOrPipesAsStringOrObj] : [pipeOrPipesAsStringOrObj];
+
+  // ensure array of Handler objects
+  const pipes = pp.map((p) => {
+    if (typeof p === 'string' && p) {
+      // parse string, e.g 'myFunc: myParam1; myParam2' => { name: 'markdown', args: ['myParam1','myParam2'] }
+      const [name, argsString] = p.split(':');
+      const args = (argsString || '').split(';').map((a) => a.trim());
+      return {
+        name: name.trim(),
+        args: args.filter((a) => !!a),
+      };
+    }
+    if (typeof p === 'object' && typeof p.name === 'string') {
+      // already a Handler object
+      p.args = p.args || [];
+      return p;
+    }
+    // anything else is returned undefined and filtered out
+    return;
+  });
+  const validPipes = pipes.filter((x) => !!x) as Pipe[];
+  return validPipes;
+}

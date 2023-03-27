@@ -1,0 +1,43 @@
+{
+  "title": "My title",
+  "description": "My description",
+  "dynamicContent": [
+    {
+      "type": "article",
+      "headline": "Article 1",
+      "content": "My first text."
+    },
+    {
+      "type": "imagelist",
+      "name": "My first image list",
+      "photographer": {
+        "name": "John Doe",
+        "email": "mailto:john.doe@example.com"
+      },
+      "images": [
+        {
+          "url": "http://example.com/image1.jpg",
+          "caption": "Image 1"
+        },
+        {
+          "url": "http://example.com/image2.jpg",
+          "caption": "Image 2"
+        },
+        {
+          "url": "http://example.com/image3.jpg",
+          "caption": "Image 3"
+        }
+      ]
+    },
+    {
+      "type": "article",
+      "headline": "Article 2",
+      "content": "My second text."
+    },
+    {
+      "type": "article",
+      "headline": "Article 3",
+      "content": "My third text."
+    }
+  ]
+}

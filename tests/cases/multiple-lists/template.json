@@ -1,0 +1,28 @@
+{
+  "title": "head > title",
+  "description": "head > meta[name=description] | attr:content",
+  "dynamicContent": [
+    {
+      "$": "section.article",
+      "type": "\"article\"",
+      "headline": "h1,h2,h3",
+      "content": "div.content"
+    },
+    {
+      "$": "div.image-list",
+      "type": "\"imagelist\"",
+      "name": "h1,h2,h3",
+      "photographer": {
+        "name": "div.meta > a",
+        "email": "div.meta > a | attr:href"
+      },
+      "images": [
+        {
+          "$": "ul > li",
+          "url": "img | attr:src",
+          "caption": "img | attr:alt"
+        }
+      ]
+    }
+  ]
+}

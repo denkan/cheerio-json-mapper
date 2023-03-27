@@ -1,0 +1,14 @@
+{
+  "title": "head > title",
+  "description": "head > meta[name=description] | attr:content",
+  "customText": "\"My hardcoded text\"",
+  "customNumber": 123,
+  "customBoolean": true,
+  "articles": [
+    {
+      "$": "section.articles > article",
+      "headline": "h1,h2,h3",
+      "content": "div.content"
+    }
+  ]
+}

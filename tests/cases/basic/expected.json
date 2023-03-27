@@ -1,0 +1,8 @@
+{
+  "title": "My title",
+  "description": "My description",
+  "article": {
+    "headline": "My headline",
+    "content": "My article text."
+  }
+}
