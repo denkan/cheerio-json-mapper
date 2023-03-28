@@ -149,7 +149,7 @@ Pipes can by asynchronous.
 ```js
 {
     name: 'span.name',
-    email: 'a[href^=mailto] | attr:href | substr:7'
+    email: 'a[href^=mailto] | attr:href | substr:7',
     telephone: 'span.tel',
     '|': 'requiredProps:name;email'
 }
@@ -184,7 +184,7 @@ const customPipes = {
   /** Replace any http:// link into https:// */
   onlyHttps: ({ value }) => value?.toString().replace(/^http:/, 'https:'),
 
-    /** Check if all required props exists - and if not, set object to undefined  */
+  /** Check if all required props exists - and if not, set object to undefined  */
   requiredProps: ({ value, args }) => {
     const obj = value; // as this should be run as object pipe, value should be an object
     const requiredProps = args; // string array
@@ -193,21 +193,17 @@ const customPipes = {
   },
 };
 
-const template =  [
-    {
-        name: 'span.name',
-        telephone: 'span.tel',
-        email: 'a[href^=mailto] | attr:href | substr:7'
-        website: 'a[href^=http] | attr:href',
-        '|': 'requiredProps:name,email'
-    }
+const template = [
+  {
+    name: 'span.name',
+    telephone: 'span.tel',
+    email: 'a[href^=mailto] | attr:href | substr:7',
+    website: 'a[href^=http] | attr:href | onlyHttps',
+    '|': 'requiredProps:name,email',
+  },
 ];
 
-const contacts = await cheerioJsonMapper(
-    html,
-    template,
-    { pipeFns: customPipes }
-);
+const contacts = await cheerioJsonMapper(html, template, { pipeFns: customPipes });
 ```
 
 ## Examples
