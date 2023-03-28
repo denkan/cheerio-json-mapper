@@ -1,7 +1,7 @@
 {
   "name": "cheerio-json-mapper",
   "version": "1.0.0",
-  "description": "Blank NPM package template with TypeScript + Jest support",
+  "description": "Extract data from HTML using JSON mapping with custom pipe functionality",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -19,11 +19,11 @@
     "url": "git+https://github.com/denkan/cheerio-json-mapper.git"
   },
   "keywords": [
-    "npm",
-    "package",
-    "template",
-    "typescript",
-    "jest"
+    "cheerio",
+    "json",
+    "mapping",
+    "html to json",
+    "map html to json"
   ],
   "author": "Dennis Nyström",
   "license": "MIT",
