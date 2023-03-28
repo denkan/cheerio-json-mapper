@@ -175,7 +175,7 @@ async function getValue(
   $scope: cheerio.Cheerio<cheerio.AnyNode>,
   opts: Options,
 ): Promise<{ value: unknown; startIndex?: number }> {
-  const isHardValue = /^".*"$/.test(templateValue.toString()); // e.g. "my hard value"
+  const isHardValue = /(^".*"$)|(^'.*'$)/.test(templateValue.toString()); // e.g. "my hard value"
   if (isHardValue) {
     return { value: templateValue.toString().slice(1, -1) }; // remove quotes
   }

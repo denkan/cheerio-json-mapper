@@ -1,8 +1,8 @@
 # Cheerio JSON Mapper
 
-<font size="3">
 A tool to extract HTML markup through [Cheerio](https://cheerio.js.org/) to JSON in NodeJS.
-</font>
+
+---
 
 <!-- ![Build Status]() -->
 
@@ -72,12 +72,14 @@ The main approach is to start from what we need to retrieve. Defining the end st
 
 #### Hard-coded values (literals)
 
-We can set hard values to the structure by wrapping strings in quotes (or single-quotes). Numbers and booleans are automatically detected as literals:
+We can set hard values to the structure by wrapping strings in quotes or single-quotes. Numbers and booleans are automatically detected as literals:
 
 ```js
 {
     headline: 'article > h1',
-
+    public: true,
+    copyright: "'© Copyright Us Inc. 2023'",
+    version: 1.23
 }
 ```
 
@@ -128,7 +130,7 @@ Sometimes the text content of a selected node isn't what we need. Or not enough.
 
 Pipes are functionality that can be applied to a value - both a prop selector and an object. Use pipes to handle any custom needs.
 
-Multiple pipes are supported (seperated by `|` char) and will be run in sequence. Do note that value returned from a pipe will be passed to next pipe.
+Multiple pipes are supported (seperated by `|` char) and will be run in sequence. Do note that value returned from a pipe will be passed to next pipe, allowing us to chain functionality same way as \*nix terminal pipes.
 
 Pipes can have basic arguments by adding colon (`:`) along with semi-colon (`;`) seperated values.
 
