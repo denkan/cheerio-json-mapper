@@ -1,6 +1,6 @@
 {
   "name": "cheerio-json-mapper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Extract data from HTML using JSON mapping with custom pipe functionality",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
