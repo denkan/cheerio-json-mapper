@@ -91,7 +91,7 @@ function mapObject($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonT
   // a selector query can match multiple elements, so we need to loop over them
   const results: ResultWithPosition[] = [];
 
-  $subScope.each((i) => {
+  for (let i = 0; i < $subScope.length; i++) {
     const $el = $subScope.eq(i);
     const result: Record<string, unknown> = {};
     const position: Record<string, number> = {};
@@ -124,7 +124,7 @@ function mapObject($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonT
       result: pipedResults,
       position,
     });
-  });
+  }
 
   return results;
 }
@@ -138,11 +138,12 @@ function mapArray($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonTe
   for (const templateValue of jsonTemplate) {
     if (typeof templateValue === 'object' && templateValue) {
       // collect all matched items
-      mapObject($scope, templateValue, opts).forEach((r) => resultWithPositions.push(r));
+      const items = mapObject($scope, templateValue, opts);
+      items.forEach((r) => resultWithPositions.push(r));
     } else {
-      // string / literal / array?
-      // const item = cheerioJsonMapper($scope, templateValue, opts);
-      // resultWithPositions.push(item);
+      // literal (tuples)
+      const { value, startIndex } = getValue(templateValue, $scope, opts);
+      resultWithPositions.push({ result: value, position: { _: startIndex || 0 } });
     }
   }
   const sortedResultWithPositions = resultWithPositions.sort((a, b) => {
