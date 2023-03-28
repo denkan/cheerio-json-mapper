@@ -12,7 +12,7 @@
       "name": "My first image list",
       "photographer": {
         "name": "John Doe",
-        "email": "mailto:john.doe@example.com"
+        "email": "john.doe@example.com"
       },
       "images": [
         {

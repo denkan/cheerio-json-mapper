@@ -28,38 +28,30 @@ export interface Pipe<T = unknown[]> {
 export interface Options {
   selectProp: string;
   pipeProp: string;
-  hiddenPropSuffix: string;
   pipeFns: PipeFnMap;
 }
 
 const defaultPipeFns: PipeFnMap = {
   text: ({ $scope, selector }) => $scope.find(selector).text().trim(),
   trim: ({ value }) => value?.toString().trim(),
-  lowercase: ({ value }) => value?.toString().toLowerCase(),
-  uppercase: ({ value }) => value?.toString().toUpperCase(),
+  lower: ({ value }) => value?.toString().toLowerCase(),
+  upper: ({ value }) => value?.toString().toUpperCase(),
+  substr: ({ value, args }) => value?.toString().substring(+(args?.[0] || 0), +(args?.[1] || 0) || undefined),
+  json: ({ value }) => (typeof value === 'string' && value ? JSON.parse(value) : value),
+  default: ({ value, args }) => value || args?.[0],
+  log: ({ value, args }) => {
+    console.log(args?.[0], value);
+    return value;
+  },
   attr: ({ $scope, selector, args }) => {
     const attrName = args?.[0]?.toString() || '';
     return $scope.find(selector).attr(attrName)?.trim();
-  },
-  /** Remove internal props */
-  cleanup: ({ value, opts }) => {
-    if (typeof value === 'object' && value) {
-      const obj = value as Record<string, unknown>;
-      for (const key in obj) {
-        const isInternalProp = [opts.selectProp, opts.pipeProp].includes(key);
-        if (isInternalProp) {
-          delete obj[key];
-        }
-      }
-    }
-    return value;
   },
 };
 
 const defaultOptions: Options = {
   selectProp: '$',
   pipeProp: '|',
-  hiddenPropSuffix: '____cjm____',
   pipeFns: { ...defaultPipeFns },
 };
 
@@ -109,18 +101,23 @@ function mapObject($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonT
       if (typeof templateValue === 'object' && templateValue) {
         result[key] = cheerioJsonMapper($el, templateValue, opts); // recurse
       } else {
+        const isInternalProp = [opts.selectProp, opts.pipeProp].includes(key);
+        if (isInternalProp) {
+          if (key === opts.selectProp) {
+            // oh wait, we need to track position for selector prop!
+            position[opts.selectProp] = $el[0]?.startIndex ?? 0;
+          }
+          continue; // dont do anything else with selector/pipe props here
+        }
         const { value, startIndex } = getValue(templateValue, $el, opts);
         result[key] = value; // set rendered value
-
-        const isSelectorProp = key === opts.selectProp;
-        position[key] = (isSelectorProp ? $el[0]?.startIndex : startIndex) ?? 0;
+        position[key] = startIndex ?? 0; // set position
       }
     }
 
     // apply pipes for object
     const pipesAsString = (jsonTemplate[opts.pipeProp] || '').toString().split('|');
     const pipes = parsePipes(pipesAsString);
-    pipes.push({ name: 'cleanup' });
     const pipedResults = applyPipes(pipes, { value: result, $scope: $el, opts });
 
     results.push({
@@ -210,8 +207,9 @@ export function parsePipes(pipeOrPipesAsStringOrObj: SingleOrArray<string | Pipe
   const pipes = pp.map((p) => {
     if (typeof p === 'string' && p) {
       // parse string, e.g 'myFunc: myParam1; myParam2' => { name: 'markdown', args: ['myParam1','myParam2'] }
-      const [name, argsString] = p.split(':');
-      const args = (argsString || '').split(';').map((a) => a.trim());
+      const [name, ...argsStringArr] = p.split(':');
+      const argsString = argsStringArr.join(':'); // re-join with ':' to allow for ':' in args
+      const args = argsString.split(';').map((a) => a.trim());
       return {
         name: name.trim(),
         args: args.filter((a) => !!a),

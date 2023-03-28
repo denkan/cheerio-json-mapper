@@ -1,0 +1,37 @@
+<ul class="contact-list">
+  <li class="contact">
+    <a href="mailto:    John.Doe@Example.com">John Doe</a>
+    <span class="company">Example Inc.</span>
+    <!-- Note: email should be lower -->
+  </li>
+  <li class="contact">
+    <a href="mailto: jane.doe@example.com">Jane Doe</a>
+    <span class="company"> Another Inc. </span>
+    <a href="http://another.example.com">Website</a>
+    <!-- Note: url should use https:// -->
+  </li>
+  <li class="contact">
+    <script type="application/ld+json">
+      {
+        "name": "Json Doe",
+        "email": "json.doe@example.com",
+        "company": "Json Inc."
+      }
+    </script>
+    <!-- Note: should parse json -->
+  </li>
+  <li class="contact">
+    <span class="company"> Fourth Inc. With </span>
+    <a href="https://fourth.example.com">Website</a>
+    <!-- Note: contact should not be included due to missing name/email -->
+  </li>
+  <li class="contact">
+    <script type="application/ld+json">
+      {
+        "name": "Json Doe without email",
+        "company": "Json Inc."
+      }
+    </script>
+    <!-- Note: contact should not be included due to missing email -->
+  </li>
+</ul>

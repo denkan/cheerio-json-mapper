@@ -14,7 +14,7 @@
       "name": "h1,h2,h3",
       "photographer": {
         "name": "div.meta > a",
-        "email": "div.meta > a | attr:href"
+        "email": "div.meta > a | attr:href | substr:7"
       },
       "images": [
         {
