@@ -3,6 +3,7 @@ import path from 'path';
 import { cheerioJsonMapper, Options, PipeFnMap } from '../src';
 
 const customPipes: PipeFnMap = {
+  /** Replace any http:// link into https:// */
   onlyHttps: ({ value }) => value?.toString().replace(/^http:/, 'https:'),
 
   /** Check if all required props exists - and if not, set object to undefined  */
