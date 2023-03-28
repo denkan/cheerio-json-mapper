@@ -35,6 +35,16 @@ const customPipes: PipeFnMap = {
     const prop = args?.[0] as string;
     return obj[prop];
   },
+
+  /** Async pipe proof of concept */
+  dummyDelay: async ({ value, args }) => {
+    const delay = +(args?.[0] || 0) || (0 as number);
+    console.time('dummyDelay');
+    console.timeLog('dummyDelay', `Started for ${delay}ms`);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    console.timeEnd('dummyDelay');
+    return value;
+  },
 };
 
 describe('cases', () => {
@@ -54,12 +64,12 @@ describe('cases', () => {
       expected: fs.readFileSync(filePaths.expected, 'utf8'),
     };
     describe(`case [${caseDir}]`, () => {
-      it('should return expected', () => {
+      it('should return expected', async () => {
+        const expected = JSON.parse(fileContents.expected);
         const options: Partial<Options> = {
           pipeFns: customPipes,
         };
-        const r = cheerioJsonMapper(fileContents.content, fileContents.template, options);
-        const expected = JSON.parse(fileContents.expected);
+        const r = await cheerioJsonMapper(fileContents.content, fileContents.template, options);
         expect(r).toEqual(expected);
       });
     });

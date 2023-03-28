@@ -14,5 +14,5 @@
       "|": "replaceWithProp:jsonData | requiredProps:name;email"
     }
   ],
-  "|": "cleanArray:contacts | replaceWithProp:contacts"
+  "|": "cleanArray:contacts | replaceWithProp:contacts | dummyDelay:200"
 }
