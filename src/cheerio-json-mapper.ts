@@ -37,8 +37,20 @@ const defaultPipeFns: PipeFnMap = {
   lower: ({ value }) => value?.toString().toLowerCase(),
   upper: ({ value }) => value?.toString().toUpperCase(),
   substr: ({ value, args }) => value?.toString().substring(+(args?.[0] || 0), +(args?.[1] || 0) || undefined),
-  json: ({ value }) => (typeof value === 'string' && value ? JSON.parse(value) : value),
   default: ({ value, args }) => value || args?.[0],
+  parseAs: ({ value, args }) => {
+    const type = args?.[0]?.toString().toLowerCase();
+    const parseFns: Record<string, (v: string) => unknown> = {
+      number: (v) => +v,
+      int: (v) => parseInt(v, 10),
+      float: parseFloat,
+      bool: (v) => v?.toLowerCase() === 'true',
+      date: Date.parse,
+      json: JSON.parse,
+      noop: (v) => v,
+    };
+    return parseFns[type || 'noop']((value || '').toString()) ?? value;
+  },
   log: ({ value, args }) => {
     console.log(args?.[0], value);
     return value;
