@@ -1,6 +1,6 @@
 # Cheerio JSON Mapper
 
-A tool to extract HTML markup through [Cheerio](https://cheerio.js.org/) to JSON in NodeJS.
+Extract HTML markup to JSON using [Cheerio](https://cheerio.js.org/).
 
 ---
 
@@ -40,8 +40,9 @@ const template = {
   headline: 'article > h1',
   articleText: 'article > .content',
   author: {
-    name: 'article > .author > a',
-    email: 'article > .author > a | attr:href | substr:7',
+    $: 'article > .author',
+    name: '> a',
+    email: '> a | attr:href | substr:7',
   },
 };
 
@@ -62,24 +63,24 @@ More examples are found in [the repo's tests/cases folder](https://github.com/de
 
 ## Core concepts
 
-- [Result structure first](#result-structure-first)
+- [End-Result Structure First](#end-result-structure-first)
 - [Scoping](#scoping)
 - [Pipes](#pipes)
 
-### Result Structure First
+### End-Result Structure First
 
-The main approach is to start from what we need to retrieve. Defining the end structure and just telling each property which _selector_ to use to get its value is an intuitive way to map the data.
+The main approach is to start from what we need to retrieve. Defining the end structure and just telling each property which _selector_ to use to get its value.
 
 #### Hard-coded values (literals)
 
 We can set hard values to the structure by wrapping strings in quotes or single-quotes. Numbers and booleans are automatically detected as literals:
 
-```js
+```json
 {
-    headline: 'article > h1',
-    public: true,
-    copyright: "'© Copyright Us Inc. 2023'",
-    version: 1.23
+  "headline": "article > h1",
+  "public": true,
+  "copyright": "'© Copyright Us Inc. 2023'",
+  "version": 1.23
 }
 ```
 
@@ -103,7 +104,7 @@ Example:
     <a href="mailto:john.doe@example.com">John Doe</a>
   </div>
   <div class="other">
-    <span class="name"> This wont be selected due to scoping </span>
+    <span class="name">This wont be selected due to scoping</span>
   </div>
 </article>
 ```
@@ -117,7 +118,7 @@ const template = {
     $: '> .author',
     name: 'span.name',
     telephone: 'span.tel',
-    email: 'a | attr:href | substr:7',
+    email: 'a[href^=mailto:] | attr:href | substr:7',
   },
 };
 ```
@@ -130,7 +131,7 @@ Sometimes the text content of a selected node isn't what we need. Or not enough.
 
 Pipes are functionality that can be applied to a value - both a prop selector and an object. Use pipes to handle any custom needs.
 
-Multiple pipes are supported (seperated by `|` char) and will be run in sequence. Do note that value returned from a pipe will be passed to next pipe, allowing us to chain functionality same way as \*nix terminal pipes.
+Multiple pipes are supported (seperated by `|` char) and will run in sequence. Do note that value returned from a pipe will be passed to next pipe, allowing us to chain functionality (kind of same way as \*nix terminal pipes, which was the inspiration to this syntax).
 
 Pipes can have basic arguments by adding colon (`:`) along with semi-colon (`;`) seperated values.
 
@@ -140,7 +141,7 @@ Pipes can by asynchronous.
 
 ```js
 {
-  email: 'a[href^=mailto] | attr:href | substr:7';
+  email: 'a[href^=mailto:] | attr:href | substr:7';
 }
 ```
 
@@ -149,7 +150,7 @@ Pipes can by asynchronous.
 ```js
 {
     name: 'span.name',
-    email: 'a[href^=mailto] | attr:href | substr:7',
+    email: 'a[href^=mailto:] | attr:href | substr:7',
     telephone: 'span.tel',
     '|': 'requiredProps:name;email'
 }
@@ -197,7 +198,7 @@ const template = [
   {
     name: 'span.name',
     telephone: 'span.tel',
-    email: 'a[href^=mailto] | attr:href | substr:7',
+    email: 'a[href^=mailto:] | attr:href | substr:7',
     website: 'a[href^=http] | attr:href | onlyHttps',
     '|': 'requiredProps:name,email',
   },

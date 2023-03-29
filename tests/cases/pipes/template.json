@@ -2,8 +2,8 @@
   "contacts": [
     {
       "$": "ul > li.contact",
-      "name": "a[href^=mailto]",
-      "email": "a[href^=mailto] | attr:href | substr:7 | lower | trim",
+      "name": "a[href^=mailto:]",
+      "email": "a[href^=mailto:] | attr:href | substr:7 | lower | trim",
       "company": "span.company",
       "website": "a[href^=http] | attr:href | onlyHttps",
       "|": "requiredProps:name;email"
