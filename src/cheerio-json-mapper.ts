@@ -89,8 +89,8 @@ export async function cheerioJsonMapper(
     return mapArray($scope, jsonTemplate, opts);
   }
   if (typeof jsonTemplate === 'object' && jsonTemplate && !Array.isArray(jsonTemplate)) {
-    const [{ result }] = await mapObject($scope, jsonTemplate, opts);
-    return result; // return first matched
+    const [resultWithPosition] = await mapObject($scope, jsonTemplate, opts);
+    return resultWithPosition?.result; // return first matched, if any
   }
 }
 
