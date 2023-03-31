@@ -1,6 +1,10 @@
 {
   "title": "head > title",
   "description": "head > meta[name=description] | attr:content",
+  "thisdoesnt": {
+    "$": "nope",
+    "exist": "doublenope > div.doesnt-exist"
+  },
   "dynamicContent": [
     {
       "$": "section.article",
