@@ -32,7 +32,11 @@ export interface Options {
 }
 
 const defaultPipeFns: PipeFnMap = {
-  text: ({ $scope, selector }) => $scope.find(selector).text().trim(),
+  /** If matches found, return text content - else undefined */
+  text: ({ $scope, selector }) => {
+    const $match = $scope.find(selector);
+    return $match.length ? $match.text().trim() : undefined;
+  },
   trim: ({ value }) => value?.toString().trim(),
   lower: ({ value }) => value?.toString().toLowerCase(),
   upper: ({ value }) => value?.toString().toUpperCase(),
@@ -185,9 +189,7 @@ async function getValue(
   // use selector and run pipes
   const [selector, ...pipesAsString] = templateValue.split('|');
   const pipes = parsePipes(pipesAsString);
-  if (pipes.length === 0) {
-    pipes.push({ name: 'text' }); // use `text` as default pipe if nothing else specified
-  }
+  pipes.unshift({ name: 'text' }); // always start with `text` to get text value
   const result = await applyPipes(pipes, { selector, opts, $scope });
   const startIndex = $scope.find(selector)[0]?.startIndex ?? undefined;
   return { value: result, startIndex };
