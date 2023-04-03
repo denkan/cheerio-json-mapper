@@ -10,7 +10,7 @@
     },
     {
       "$": "ul > li.contact",
-      "jsonData": "script[type='application/ld+json'] | text | default:{} | log:jsontext | parseAs:json",
+      "jsonData": "script[type='application/ld+json'] | default:{} | log:jsontext | parseAs:json",
       "|": "replaceWithProp:jsonData | requiredProps:name;email"
     }
   ],
