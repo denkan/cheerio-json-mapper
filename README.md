@@ -59,7 +59,7 @@ console.log(result);
 // }
 ```
 
-More examples are found in [the repo's tests/cases folder](https://github.com/denkan/cheerio-json-mapper/tree/master/tests/cases)
+More examples are found in [the repo's tests/cases folder](https://github.com/denkan/cheerio-json-mapper/tree/master/tests/cases).
 
 ## Core concepts
 
@@ -123,13 +123,39 @@ const template = {
 };
 ```
 
+#### Self-selector
+
+In some cases we want to reuse the object selector (`$`) for a property selector. Especially handy when targeting lists, e.g. this case:
+
+```js
+const html = `
+  <ul>
+    <li>One</li>
+    <li>Two</li>
+    <li>Three</li>
+  </ul>
+`;
+const template = [
+  $: 'ul > li',
+  value: '$' // uses `ul > li` as property selector
+];
+const result = await cheerioJsonMapper(html, template);
+console.log(result);
+// Output:
+// [
+//   { value: 'One' },
+//   { value: 'Two' },
+//   { value: 'Three' }
+// ];
+```
+
 > Note: Don't like the `$` name for scope selector? Change it through options: `cheerioJsonMapper(html, template, { scopeProp: '__scope' }): `
 
 ### Pipes
 
-Sometimes the text content of a selected node isn't what we need. Or not enough. **_Pipes_ to rescue!**
+Sometimes the text content of a selected node is not what we need. Or not enough. **_Pipes_ to rescue!**
 
-Pipes are functionality that can be applied to a value - both a prop selector and an object. Use pipes to handle any custom needs.
+Pipes are functionality that can be applied to a value - both a property selector and an object. Use pipes to handle any custom needs.
 
 Multiple pipes are supported (seperated by `|` char) and will run in sequence. Do note that value returned from a pipe will be passed to next pipe, allowing us to chain functionality (kind of same way as \*nix terminal pipes, which was the inspiration to this syntax).
 
@@ -167,11 +193,11 @@ Pipes can by asynchronous.
 - `substr` - get substring of grabbed text
 - `default` - if value is nullish/empty, use specified fallback value
 - `parseAs` - parse a string to different types:
-  - `parseAs:number` - number (alias to `parseAs:float`)
+  - `parseAs:number` - number
   - `parseAs:int` - integer
   - `parseAs:float` - float
   - `parseAs:bool` - boolean
-  - `parseAs:date` - date (js `Date` object)
+  - `parseAs:date` - date
   - `parseAs:json` - JSON
 - `log` - will console.log current value (use for debugging)
 - `attr` - get attribute value from selected node
@@ -189,7 +215,7 @@ const customPipes = {
   requiredProps: ({ value, args }) => {
     const obj = value; // as this should be run as object pipe, value should be an object
     const requiredProps = args; // string array
-    const hasMissingProps = requiredProps.some((prop) => obj[prop] != null);
+    const hasMissingProps = requiredProps.some((prop) => obj[prop] == null);
     return hasMissingProps ? undefined : obj;
   },
 };
@@ -200,7 +226,7 @@ const template = [
     telephone: 'span.tel',
     email: 'a[href^=mailto:] | attr:href | substr:7',
     website: 'a[href^=http] | attr:href | onlyHttps',
-    '|': 'requiredProps:name,email',
+    '|': 'requiredProps:name;email',
   },
 ];
 
@@ -210,3 +236,22 @@ const contacts = await cheerioJsonMapper(html, template, { pipeFns: customPipes 
 ## Examples
 
 More examples are found in [the repo's tests/cases folder](https://github.com/denkan/cheerio-json-mapper/tree/master/tests/cases).
+
+## Change Log
+
+### v1.0.2 - 2023-04-04
+
+- Fixed bug when scoped object selectors doesn't match anything.
+- Support [self-selector](#self-selector).
+- Align how default pipes should behave.
+
+### v1.0.1 - 2023-03-28
+
+- Updated README
+
+### v1.0.0 - 2023-03-28
+
+- First release with initial functionality;
+  - End-result structure first approach
+  - Scoping
+  - Pipes with default setup of pipe funcs
