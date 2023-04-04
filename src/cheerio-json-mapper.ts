@@ -33,8 +33,8 @@ export interface Options {
 
 const defaultPipeFns: PipeFnMap = {
   /** If matches found, return text content - else undefined */
-  text: ({ $scope, selector }) => {
-    const $match = $scope.find(selector);
+  text: ({ $scope, selector, opts }) => {
+    const $match = getScope($scope, selector, opts);
     return $match.length ? $match.text().trim() : undefined;
   },
   trim: ({ value }) => value?.toString().trim(),
@@ -59,9 +59,9 @@ const defaultPipeFns: PipeFnMap = {
     console.log(args?.[0], value);
     return value;
   },
-  attr: ({ $scope, selector, args }) => {
+  attr: ({ $scope, selector, args, opts }) => {
     const attrName = args?.[0]?.toString() || '';
-    return $scope.find(selector).attr(attrName)?.trim();
+    return getScope($scope, selector, opts).attr(attrName)?.trim();
   },
 };
 
@@ -103,7 +103,7 @@ export async function cheerioJsonMapper(
  **/
 async function mapObject($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonTemplateObject, opts: Options) {
   const scopeSelector = jsonTemplate[opts.selectProp] as string;
-  const $subScope = scopeSelector ? $scope.find(scopeSelector) : $scope; // use $ selector if specified
+  const $subScope = getScope($scope, scopeSelector, opts); // use $ selector if specified
 
   // a selector query can match multiple elements, so we need to loop over them
   const results: ResultWithPosition[] = [];
@@ -191,7 +191,7 @@ async function getValue(
   const pipes = parsePipes(pipesAsString);
   pipes.unshift({ name: 'text' }); // always start with `text` to get text value
   const result = await applyPipes(pipes, { selector, opts, $scope });
-  const startIndex = $scope.find(selector)[0]?.startIndex ?? undefined;
+  const startIndex = getScope($scope, selector, opts)[0]?.startIndex ?? undefined;
   return { value: result, startIndex };
 }
 
@@ -241,4 +241,14 @@ export function parsePipes(pipeOrPipesAsStringOrObj: SingleOrArray<string | Pipe
   });
   const validPipes = pipes.filter((x) => !!x) as Pipe[];
   return validPipes;
+}
+
+/**
+ * Get sub scope or current scope based on selector.
+ * If selector is `Options.selectProp`, use current scope instead of sub-scope.
+ */
+export function getScope($scope: cheerio.Cheerio<cheerio.AnyNode>, selector?: string, opts?: Options) {
+  selector = selector?.trim() || '';
+  const useSubScope = selector && selector !== opts?.selectProp;
+  return useSubScope ? $scope.find(selector) : $scope;
 }
