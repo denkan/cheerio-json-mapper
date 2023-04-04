@@ -1,0 +1,54 @@
+{
+  "text-1": ".text",
+  "text-2": ".text | text",
+  "trim": ".trim | trim",
+  "lower": ".lower | lower",
+  "upper": ".upper | upper",
+  "substr-1": ".substr | substr:3",
+  "substr-2": ".substr | substr:3;13",
+  "default": ".default | default:My default value",
+  "parseAs": {
+    "numbers": [
+      {
+        "$": "ul.numbers li",
+        "li": "$ | parseAs:number"
+      }
+    ],
+    "ints": [
+      {
+        "$": "ul.numbers li",
+        "li": "$ | parseAs:int"
+      }
+    ],
+    "floats": [
+      {
+        "$": "ul.numbers li",
+        "li": "$ | parseAs:float"
+      }
+    ],
+    "bools": [
+      {
+        "$": "ul.bools li",
+        "li": "$ | parseAs:bool"
+      }
+    ],
+    "dates": [
+      {
+        "$": "ul.dates li",
+        "li": "$ | parseAs:date"
+      }
+    ],
+    "jsons": [
+      {
+        "$": "ul.jsons li",
+        "li": "$ | parseAs:json"
+      }
+    ],
+    "wrongs": [
+      {
+        "$": "ul.wrongs li",
+        "li": "$ | parseAs:these | parseAs:doesnt | parseAs:exists"
+      }
+    ]
+  }
+}

@@ -44,16 +44,24 @@ const defaultPipeFns: PipeFnMap = {
   default: ({ value, args }) => value || args?.[0],
   parseAs: ({ value, args }) => {
     const type = args?.[0]?.toString().toLowerCase();
-    const parseFns: Record<string, (v: string) => unknown> = {
+    const parseFns: Record<string, (v: string | number) => unknown> = {
+      string: (v) => v + '',
       number: (v) => +v,
-      int: (v) => parseInt(v, 10),
-      float: parseFloat,
-      bool: (v) => v?.toLowerCase() === 'true',
-      date: Date.parse,
-      json: JSON.parse,
+      int: (v) => parseInt(v + '', +(args?.[1] + '') || 10),
+      float: (v) => parseFloat(v + ''),
+      bool: (v) => (v + '').toLowerCase() === 'true',
+      date: (v) => new Date(v).toJSON() ?? new Date(+v).toJSON(),
+      json: (v) => {
+        try {
+          return JSON.parse(v + '');
+        } catch {
+          return undefined;
+        }
+      },
       noop: (v) => v,
     };
-    return parseFns[type || 'noop']((value || '').toString()) ?? value;
+    const parseFn = parseFns[type || 'noop'];
+    return parseFn ? parseFn(value as string | number) : value;
   },
   log: ({ value, args }) => {
     console.log(args?.[0], value);

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { cheerioJsonMapper, Options, PipeFnMap } from '../src';
+import { cheerioJsonMapper, JsonTemplate, PipeFnMap } from '../src';
 
 const customPipes: PipeFnMap = {
   /** Replace any http:// link into https:// */
@@ -54,25 +54,57 @@ describe('cases', () => {
 
   for (const caseDir of caseDirs) {
     const caseDirPath = path.join(caseRootDir, caseDir);
-    const filePaths = {
-      content: path.join(caseDirPath, 'content.html'),
-      template: path.join(caseDirPath, 'template.json'),
-      expected: path.join(caseDirPath, 'expected.json'),
-    };
-    const fileContents = {
-      content: fs.readFileSync(filePaths.content, 'utf8'),
-      template: fs.readFileSync(filePaths.template, 'utf8'),
-      expected: fs.readFileSync(filePaths.expected, 'utf8'),
-    };
+    const { content, template, expected } = getTestCase(caseDirPath);
+
     describe(`case [${caseDir}]`, () => {
-      it('should return expected', async () => {
-        const expected = JSON.parse(fileContents.expected);
-        const options: Partial<Options> = {
-          pipeFns: customPipes,
-        };
-        const r = await cheerioJsonMapper(fileContents.content, fileContents.template, options);
+      it('should have content as string', () => {
+        expect(content).toBeDefined();
+        expect(typeof content).toBe('string');
+      });
+      it('should have template as object', () => {
+        expect(template).toBeDefined();
+        expect(typeof template).toBe('object');
+      });
+      it('should have expected as object', () => {
+        expect(expected).toBeDefined();
+        expect(typeof expected).toBe('object');
+      });
+      it('should resolve expected', async () => {
+        const r = await cheerioJsonMapper(content, template, { pipeFns: customPipes });
         expect(r).toEqual(expected);
       });
     });
   }
 });
+
+interface TestCase {
+  content: string;
+  template: string | JsonTemplate;
+  expected: unknown;
+}
+
+function getTestCase(caseDirPath: string): TestCase {
+  const filePaths = {
+    content: path.join(caseDirPath, 'content.html'),
+    template: {
+      js: path.join(caseDirPath, 'template.js'),
+      json: path.join(caseDirPath, 'template.json'),
+    },
+    expected: {
+      js: path.join(caseDirPath, 'expected.js'),
+      json: path.join(caseDirPath, 'expected.json'),
+    },
+  };
+  const jsOrJson = (x: { js: string; json: string }) => {
+    if (fs.existsSync(x.js)) {
+      return require(x.js);
+    } else {
+      return JSON.parse(fs.readFileSync(x.json, 'utf8'));
+    }
+  };
+  return {
+    content: fs.readFileSync(filePaths.content, 'utf8'),
+    template: jsOrJson(filePaths.template),
+    expected: jsOrJson(filePaths.expected),
+  };
+}
