@@ -136,8 +136,10 @@ const html = `
   </ul>
 `;
 const template = [
-  $: 'ul > li',
-  value: '$' // uses `ul > li` as property selector
+  {
+    $: 'ul > li',
+    value: '$', // uses `ul > li` as property selector
+  },
 ];
 const result = await cheerioJsonMapper(html, template);
 console.log(result);
