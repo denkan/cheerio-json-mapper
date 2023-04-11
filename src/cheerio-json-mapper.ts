@@ -257,6 +257,7 @@ export function parsePipes(pipeOrPipesAsStringOrObj: SingleOrArray<string | Pipe
  */
 export function getScope($scope: cheerio.Cheerio<cheerio.AnyNode>, selector?: string, opts?: Options) {
   selector = selector?.trim() || '';
-  const useSubScope = selector && selector !== opts?.selectProp;
+  const selectProp = opts?.selectProp || defaultOptions.selectProp;
+  const useSubScope = !!(selector && selector !== selectProp);
   return useSubScope ? $scope.find(selector) : $scope;
 }
