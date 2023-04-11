@@ -239,6 +239,10 @@ More examples are found in [the repo's tests/cases folder](https://github.com/de
 
 ## Change Log
 
+### v1.0.3 - 2023-04-11
+
+- Fixed bug with getScope() method.
+
 ### v1.0.2 - 2023-04-04
 
 - Fixed bug when scoped object selectors doesn't match anything.
