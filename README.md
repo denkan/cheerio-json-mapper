@@ -241,6 +241,11 @@ More examples are found in [the repo's tests/cases folder](https://github.com/de
 
 ## Change Log
 
+### v1.0.4 - 2024-10-18
+
+- Update Cheerio to v1.0.0
+- Add test/example for table formatting
+
 ### v1.0.3 - 2023-04-11
 
 - Fixed bug with getScope() method.
