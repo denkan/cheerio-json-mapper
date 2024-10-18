@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import fs from 'fs';
 import path from 'path';
 import { cheerioJsonMapper, JsonTemplate, PipeFnMap } from '../src';
@@ -45,6 +46,26 @@ const customPipes: PipeFnMap = {
     await new Promise((resolve) => setTimeout(resolve, delay));
     console.timeEnd('dummyDelay');
     return value;
+  },
+
+  /** Transform root object into desired list structure */
+  transformTable: ({ value }) => {
+    // `value` = root object
+    const isValid = typeof value === 'object' && value;
+    if (!isValid) {
+      return value;
+    }
+    const tableObj = value as { rows: Array<{ cols: Array<{ value: string }> }> };
+    const headers = tableObj.rows[0].cols.map((h) => h.value); // e.g ["Name", "Age"]
+    const rows = tableObj.rows.slice(1); // skip header row
+    const resultList = rows.map((row) => {
+      const resultItem: Record<string, string> = {};
+      headers.forEach((headerText, i) => {
+        resultItem[headerText] = row.cols[i].value;
+      });
+      return resultItem;
+    });
+    return resultList;
   },
 };
 
