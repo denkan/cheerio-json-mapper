@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type { AnyNode } from 'domhandler';
 
 type SingleOrArray<T> = T | T[];
 export type JsonTemplateObject = { [prop: string]: JsonTemplateValue };
@@ -13,7 +14,7 @@ export interface ResultWithPosition {
 export interface PipeInput<T = unknown[]> {
   value?: unknown;
   selector?: string;
-  $scope: cheerio.Cheerio<cheerio.AnyNode>;
+  $scope: cheerio.Cheerio<AnyNode>;
   opts: Options;
   args?: T; // custom extra args sent to pipe
 }
@@ -80,7 +81,7 @@ const defaultOptions: Options = {
 };
 
 export async function cheerioJsonMapper(
-  htmlOrNode: string | cheerio.AnyNode | cheerio.Cheerio<cheerio.AnyNode>,
+  htmlOrNode: string | AnyNode | cheerio.Cheerio<AnyNode>,
   jsonTemplate: string | JsonTemplate,
   options?: Partial<Options>,
 ) {
@@ -89,9 +90,9 @@ export async function cheerioJsonMapper(
   }
 
   const isCheerioNode =
-    typeof htmlOrNode === 'object' && (htmlOrNode as cheerio.Cheerio<cheerio.AnyNode>).cheerio === '[cheerio object]';
-  const $scope: cheerio.Cheerio<cheerio.AnyNode> = isCheerioNode
-    ? (htmlOrNode as cheerio.Cheerio<cheerio.AnyNode>)
+    typeof htmlOrNode === 'object' && (htmlOrNode as cheerio.Cheerio<AnyNode>).cheerio === '[cheerio object]';
+  const $scope: cheerio.Cheerio<AnyNode> = isCheerioNode
+    ? (htmlOrNode as cheerio.Cheerio<AnyNode>)
     : cheerio.load(htmlOrNode as never, { sourceCodeLocationInfo: true })(':root');
 
   const opts = { ...defaultOptions, ...options };
@@ -109,7 +110,7 @@ export async function cheerioJsonMapper(
 /**
  * Map object template data
  **/
-async function mapObject($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonTemplateObject, opts: Options) {
+async function mapObject($scope: cheerio.Cheerio<AnyNode>, jsonTemplate: JsonTemplateObject, opts: Options) {
   const scopeSelector = jsonTemplate[opts.selectProp] as string;
   const $subScope = getScope($scope, scopeSelector, opts); // use $ selector if specified
 
@@ -157,7 +158,7 @@ async function mapObject($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate:
 /**
  * Map array template data
  */
-async function mapArray($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: JsonTemplateObject[], opts: Options) {
+async function mapArray($scope: cheerio.Cheerio<AnyNode>, jsonTemplate: JsonTemplateObject[], opts: Options) {
   // loop over array and sort by matched startIndex
   const resultWithPositions: ResultWithPosition[] = [];
   for (const templateValue of jsonTemplate) {
@@ -184,7 +185,7 @@ async function mapArray($scope: cheerio.Cheerio<cheerio.AnyNode>, jsonTemplate: 
  */
 async function getValue(
   templateValue: string | number | boolean,
-  $scope: cheerio.Cheerio<cheerio.AnyNode>,
+  $scope: cheerio.Cheerio<AnyNode>,
   opts: Options,
 ): Promise<{ value: unknown; startIndex?: number }> {
   const isHardValue = /(^".*"$)|(^'.*'$)/.test(templateValue.toString()); // e.g. "my hard value"
@@ -255,7 +256,7 @@ export function parsePipes(pipeOrPipesAsStringOrObj: SingleOrArray<string | Pipe
  * Get sub scope or current scope based on selector.
  * If selector is `Options.selectProp`, use current scope instead of sub-scope.
  */
-export function getScope($scope: cheerio.Cheerio<cheerio.AnyNode>, selector?: string, opts?: Options) {
+export function getScope($scope: cheerio.Cheerio<AnyNode>, selector?: string, opts?: Options) {
   selector = selector?.trim() || '';
   const selectProp = opts?.selectProp || defaultOptions.selectProp;
   const useSubScope = !!(selector && selector !== selectProp);
